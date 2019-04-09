@@ -1,16 +1,15 @@
 from flask import Flask, render_template, flash, redirect, url_for, session, logging, request
-from flask_mysqldb import MySQL
-from data import Articles
 from wtforms import Form, StringField, TextAreaField, PasswordField, validators
 from passlib.hash import sha256_crypt
-import mysql.connector
+import psycopg2
+import psycopg2.extras
+import psycopg2.extensions
 from functools import wraps
 
 app = Flask(__name__)
 
-conn = mysql.connector.connect(user='lcarneiro', password='Carne1r0', host='localhost', database='MyFlaskApp', buffered=True)
+conn = psycopg2.connect("dbname='d5p6t7bcc56c7c' user='bqmmkvzngwjkws' host='ec2-54-221-201-212.compute-1.amazonaws.com' password='2681ee5e9edd27c58e5104b4c6f7ddd2bfb33d4de8d3a3fd1f793422e05d9615'")
 
-Articles = Articles()
 
 # Home page
 @app.route('/')
@@ -22,21 +21,21 @@ def index():
 def about():
     return render_template('about.html')
 
-#Articles Page
-@app.route('/articles')
+#Questions Page
+@app.route('/questions')
 def articles():
-    return render_template('articles.html', articles = Articles)
+    return render_template('questions.html', articles = Null)
 
-# Single Article View
-@app.route('/article/<string:id>/')
+# Single Question View
+@app.route('/question/<string:id>/')
 def article(id):
-    return render_template('article.html', id=id)
+    return render_template('question.html', id=id)
 
 # Class Register Form
 class RegisterForm(Form):
     name = StringField('Name', [validators.Length(min=1, max=50)])
     username = StringField('Username', [validators.Length(min=4, max=25)])
-    email = StringField('Email', [validators.Length(min=6, max=50)])
+    description = TextAreaField('Description', [validators.Length(min=30)])
     password = PasswordField('Password', [
         validators.DataRequired(),
         validators.EqualTo('confirm', message='Passwords do not match')
@@ -49,14 +48,14 @@ def register():
     form = RegisterForm(request.form)
     if request.method == 'POST' and form.validate():
         name = form.name.data
-        email = form.email.data
+        description = form.description.data
         username = form.username.data
         password = sha256_crypt.encrypt(str(form.password.data))
 
         # create cursor
-        cur = conn.cursor(dictionary=True)
+        cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
-        cur.execute("INSERT INTO users(name, email, username, password) VALUES(%s, %s, %s, %s)", (name, email, username, password))
+        cur.execute("INSERT INTO user(name, description, login, password, isActive) VALUES(%s, %s, %s, %s, True)", (name, description, login, password))
 
         # Commit to DB
         conn.commit()
@@ -93,6 +92,7 @@ def login():
                 # correct password
                 session['logged_in'] = True
                 session['username'] = username
+                session['user_id'] = result['id']
 
                 flash ('You are now logged in', 'success')
                 return redirect(url_for('dashboard'))
@@ -119,6 +119,7 @@ def is_logged_in(f):
 
 # Logout
 @app.route('/logout')
+@is_logged_in
 def logout():
     session.clear()
     flash('You are now logged out', 'success')
@@ -130,6 +131,36 @@ def logout():
 def dashboard():
     return render_template('dashboard.html')
 
+#Question add form
+class QuestionForm(Form):
+    title = StringField('Title', [validators.Length(min=1, max=100)])
+    description = TextAreaField('Description', [validators.Length(min=30)])
+
+# Add Question
+@app.route('/add_question', methods=['GET', 'POST'])
+@is_logged_in
+def addQuestion():
+    form = QuestionForm(request.form)
+    if request.method == 'POST' and form.validate():
+        title = form.title.data
+        description = form.description.data
+
+        #Create cursor
+        cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
+        cur.execute("INSERT INTO question(title, description, user_id) VALUES(%s, %s, %s)", (name, description, session['id']))
+
+        # Commit to DB
+        conn.commit()
+
+        # close connection
+        cur.close()
+
+        flash('Question Created!', 'success')
+
+        return redirect(url_for('dashboard'))
+
+    return render_template('add_question.html', form = form)
 
 if __name__ =='__main__':
     app.secret_key='secret123'
