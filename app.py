@@ -148,7 +148,7 @@ def addQuestion():
         #Create cursor
         cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
-        cur.execute("INSERT INTO question(title, description, user_id) VALUES(%s, %s, %s)", (name, description, session['id']))
+        cur.execute("INSERT INTO public.question (title, description, user_id, \"isActive\") VALUES(%s, %s, %s, %s)", (title, description, session['user_id'], bool(1)))
 
         # Commit to DB
         conn.commit()
