@@ -55,7 +55,7 @@ def register():
         # create cursor
         cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
-        cur.execute("INSERT INTO user(name, description, login, password, isActive) VALUES(%s, %s, %s, %s, True)", (name, description, login, password))
+        cur.execute("INSERT INTO public.user (name, description, login, password, \"isActive\") VALUES (%s, %s, %s, %s, %s)", (name, description, username, password, bool(1)))
 
         # Commit to DB
         conn.commit()
@@ -77,10 +77,10 @@ def login():
         password_candidate = request.form['password']
 
         #create cursor
-        cur = conn.cursor(dictionary=True)
+        cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
         # get user by username
-        cur.execute("SELECT * FROM users WHERE username = %s", [username])
+        cur.execute("SELECT * FROM public.user WHERE login = %s", [username])
         result = cur.fetchone()
 
         if result:
