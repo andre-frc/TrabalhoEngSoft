@@ -120,6 +120,7 @@ def login():
                 session['logged_in'] = True
                 session['username'] = username
                 session['user_id'] = result['id']
+                session['name']=result['name']
 
                 flash ('You are now logged in', 'success')
                 return redirect(url_for('dashboard'))
@@ -156,7 +157,21 @@ def logout():
 @app.route('/dashboard')
 @is_logged_in
 def dashboard():
-    return render_template('dashboard.html')
+
+    cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    
+    cur.execute("SELECT id, title, description, \"createdAt\" FROM public.question  WHERE user_id = %s", (session['user_id'],))
+    
+    user_questions = cur.fetchall()
+
+    conn.commit()
+
+    cur.close()
+
+    for item in user_questions:
+        item['createdAt']= item["createdAt"].strftime("%x")
+
+    return render_template('dashboard.html', questions = user_questions)
 
 #Question add form
 class QuestionForm(Form):
