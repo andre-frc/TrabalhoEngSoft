@@ -5,6 +5,8 @@ import psycopg2
 import psycopg2.extras
 import psycopg2.extensions
 from functools import wraps
+from datetime import datetime
+
 
 app = Flask(__name__)
 
@@ -51,6 +53,8 @@ def question(id):
     conn.commit()
 
     cur.close()
+
+    quest["createdAt"] = quest["createdAt"].strftime("%x")
 
     return render_template('question.html', question=quest)
 
