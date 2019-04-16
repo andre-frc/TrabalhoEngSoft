@@ -23,13 +23,36 @@ def about():
 
 #Questions Page
 @app.route('/questions')
-def articles():
-    return render_template('questions.html', articles = Null)
+def questions():
+    
+    cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    
+    cur.execute("SELECT id, title FROM public.question LIMIT 20")
+
+    questions = cur.fetchall()
+    print (questions)
+
+    conn.commit()
+
+    cur.close()
+
+    return render_template('questions.html', questions = questions)
 
 # Single Question View
 @app.route('/question/<string:id>/')
-def article(id):
-    return render_template('question.html', id=id)
+def question(id):
+
+    cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    
+    cur.execute("SELECT q.id, q.title, q.description, q.\"createdAt\", u.name FROM public.question q JOIN public.user u ON q.user_id = u.id WHERE q.id = %s", (id))
+    
+    quest = cur.fetchone()
+
+    conn.commit()
+
+    cur.close()
+
+    return render_template('question.html', question=quest)
 
 # Class Register Form
 class RegisterForm(Form):

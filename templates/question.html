@@ -1,5 +1,13 @@
 {% extends 'layout.html' %}
 
 {% block body %}
-  <h1>{{id}}</h1>
+  <br>
+  <div class="card shadow"> 
+    <div class="card-block"> 
+      <h1><a class="card-title" href="#">{{ question.title }}</a></h1>
+      <h6 class="card-subtitle mb-2 text-muted">{{ question.name }}</h6> 
+      <p class="card-text"> {{ question.description }} </p> 
+      <small class="card-footer"> {{ question.createdAt }} </small>
+    </div> 
+  </div>
 {% endblock %}
