@@ -29,7 +29,7 @@ def questions():
     
     cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
     
-    cur.execute("SELECT id, title FROM public.question LIMIT 20")
+    cur.execute("SELECT id, title FROM public.question WHERE \"isActive\"=%s LIMIT 20", (bool(1),))
 
     questions = cur.fetchall()
     print (questions)
@@ -160,7 +160,7 @@ def dashboard():
 
     cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
     
-    cur.execute("SELECT id, title, description, \"createdAt\" FROM public.question  WHERE user_id = %s ORDER BY id ASC", (session['user_id'],))
+    cur.execute("SELECT id, title, description, \"createdAt\" FROM public.question  WHERE user_id = %s and \"isActive\"=%s ORDER BY id ASC", (session['user_id'],bool(1)))
     
     user_questions = cur.fetchall()
 
@@ -213,7 +213,7 @@ def editQuestion(id):
 
     cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
     
-    cur.execute("SELECT q.id, q.title, q.description, q.\"createdAt\", u.name FROM public.question q JOIN public.user u ON q.user_id = u.id WHERE q.id = %s", (id))
+    cur.execute("SELECT q.id, q.title, q.description, q.\"createdAt\", u.name FROM public.question q JOIN public.user u ON q.user_id = u.id WHERE q.id = %s and q.\"isActive\"=%s", (id, bool(1)))
     
     question = cur.fetchone()
 
@@ -250,6 +250,24 @@ def editQuestion(id):
         return redirect(url_for('dashboard'))
 
     return render_template('edit_question.html', form = form)
+
+# Delete Question
+@app.route('/delete_question/<string:id>', methods=['DELETE', 'POST'])
+@is_logged_in
+def deleteQuestion(id):
+    
+    # Create cursor
+    cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    
+    cur.execute("UPDATE public.question SET \"isActive\"=%s WHERE id=%s", (bool(0), id))
+
+    conn.commit()
+
+    cur.close()
+    
+    flash('Question deleted!', 'success')
+
+    return redirect(url_for('dashboard'))
 
 if __name__ =='__main__':
     app.secret_key='secret123'
