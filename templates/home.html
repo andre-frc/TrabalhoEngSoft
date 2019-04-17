@@ -4,5 +4,9 @@
 <div class="jumbotron text-center">
     <h1 class="lead display-4">Bem-vindo à Pilha Estourada</h1>
     <p>Este é um fórum de Questões e Respostas sobre qualquer tema!</p>
+    {% if session.logged_in == NULL %}
+        <a href="/register" class="btn btn-primary btn-lg">Register</a>
+        <a href="/login" class="btn btn-success btn-lg">Login</a>
+    {% endif %}
 </div>
 {% endblock %}

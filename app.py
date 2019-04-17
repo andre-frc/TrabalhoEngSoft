@@ -160,23 +160,25 @@ def dashboard():
 
     cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
     
-    cur.execute("SELECT id, title, description, \"createdAt\" FROM public.question  WHERE user_id = %s", (session['user_id'],))
+    cur.execute("SELECT id, title, description, \"createdAt\" FROM public.question  WHERE user_id = %s ORDER BY id ASC", (session['user_id'],))
     
     user_questions = cur.fetchall()
 
-    conn.commit()
+    
+    if len(user_questions) > 0:
+        for item in user_questions:
+            item['createdAt']= item["createdAt"].strftime("%x")
 
+        return render_template('dashboard.html', questions = user_questions)
+    else:
+        msg = "Você ainda não possui nenhuma questão"
+        return render_template('dashboard.html', msg = msg)
     cur.close()
-
-    for item in user_questions:
-        item['createdAt']= item["createdAt"].strftime("%x")
-
-    return render_template('dashboard.html', questions = user_questions)
 
 #Question add form
 class QuestionForm(Form):
     title = StringField('Title', [validators.Length(min=1, max=100)])
-    description = TextAreaField('Description', [validators.Length(min=30)])
+    description = TextAreaField('Description', [validators.Length(min=30, max=1000)])
 
 # Add Question
 @app.route('/add_question', methods=['GET', 'POST'])
@@ -203,6 +205,51 @@ def addQuestion():
         return redirect(url_for('dashboard'))
 
     return render_template('add_question.html', form = form)
+
+# Edit Question
+@app.route('/edit_question/<string:id>', methods=['GET', 'POST'])
+@is_logged_in
+def editQuestion(id):
+
+    cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    
+    cur.execute("SELECT q.id, q.title, q.description, q.\"createdAt\", u.name FROM public.question q JOIN public.user u ON q.user_id = u.id WHERE q.id = %s", (id))
+    
+    question = cur.fetchone()
+
+    conn.commit()
+
+    cur.close()
+
+    question["createdAt"] = question["createdAt"].strftime("%x")
+
+    # get form
+    form = QuestionForm(request.form)
+
+    # populate for fields
+    form.title.data = question["title"]
+    form.description.data = question["description"]
+
+    if request.method == 'POST' and form.validate():
+        title = request.form["title"]
+        description = request.form["description"]
+
+        #Create cursor
+        cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
+        cur.execute("UPDATE public.question SET title=%s, description=%s WHERE id=%s", (title, description, id))
+
+        # Commit to DB
+        conn.commit()
+
+        # close connection
+        cur.close()
+
+        flash('Question Updated!', 'success')
+
+        return redirect(url_for('dashboard'))
+
+    return render_template('edit_question.html', form = form)
 
 if __name__ =='__main__':
     app.secret_key='secret123'
