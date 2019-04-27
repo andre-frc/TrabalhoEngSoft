@@ -7,3 +7,4 @@ passlib==1.7.1
 psycopg2==2.8.1
 Werkzeug==0.15.2
 WTForms==2.2.1
+gunicorn==19.9.0
