@@ -11,6 +11,14 @@
       <p class="card-text text-justify"> {{ question.description }} </p> 
       <br>
       <h6 class="card-footer text-muted text-right">Criado em: {{ question.createdAt }} </h6>
-    </div> 
+      </div>
   </div>
+  <h2>Sua Resposta</h2>
+    {% from 'includes/_formhelpers.html' import render_field %}
+    <form method="POST" action="">
+      <div class="form-group">
+        {{ render_field(form.description, class_="form-control")  }}
+      </div>
+      <p><input class="btn btn-primary" type="submit" value="Submit"></p>
+    </form>
 {% endblock %}
