@@ -40,9 +40,32 @@ def questions():
 
     return render_template('questions.html', questions = questions)
 
+#Response add form
+class ResponseForm(Form):
+    description = TextAreaField('',[validators.Length(min=30)])
+
 # Single Question View
-@app.route('/question/<string:id>/')
+@app.route('/question/<string:id>/', methods=['GET','POST'])
 def question(id):
+
+    form = ResponseForm(request.form)
+    if request.method == 'POST' and form.validate():
+        description = form.description.data
+
+        # # create cursor
+        # cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
+        # cur.execute("INSERT INTO public.user (name, description, login, password, \"isActive\") VALUES (%s, %s, %s, %s, %s)", (name, description, username, password, bool(1)))
+
+        # # Commit to DB
+        # conn.commit()
+
+        # # close connection
+        # cur.close()
+
+        flash('Infelizmente essa funcionalidade ainda não está disponível', 'danger')
+
+        return redirect(url_for('questions'))
 
     cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
     
@@ -56,7 +79,7 @@ def question(id):
 
     quest["createdAt"] = quest["createdAt"].strftime("%x")
 
-    return render_template('question.html', question=quest)
+    return render_template('question.html', question=quest, form=form)
 
 # Class Register Form
 class RegisterForm(Form):
