@@ -20,8 +20,20 @@
         <br>
         <p class="card-text text-justify"> {{ answer.comment }} </p> 
         <br>
-        <h6 class="card-footer text-muted text-right">Respondido em: {{ answer.createdAt }} por {{ answer.name }}  </h6>
+        
       </div>
+      <div class="card-footer">
+        <h6 class="text-muted text-right">Respondido em: {{ answer.createdAt }} por {{ answer.name }}  </h6>    
+           {% if session.logged_in != NULL and session.user_id == answer.user_id %}
+            <form class="form-inline">
+              <a href="/edit_answer/{{answer.id}}" class="m-1 btn btn-outline-info">Edit</a>
+              <form action="{{ url_for('deleteAnswer', id = answer.id) }}" method="post">
+                <input type="hidden" name="_method" value="Delete">
+                <input type="submit" value="Delete" class="btn btn-outline-danger pull-right">
+              </form>
+            </form>
+            {% endif %}
+        </div>
     </div>
   {% endfor %}
 

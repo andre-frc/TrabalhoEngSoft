@@ -305,6 +305,24 @@ def deleteQuestion(id):
 
     return redirect(url_for('dashboard'))
 
+
+# Delete Answer
+@app.route('/delete_answer/<string:id>/', methods=['DELETE','POST'])
+@is_logged_in
+def deleteAnswer(id):
+    
+    # Create cursor
+    cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+    
+    cur.execute("UPDATE public.answer SET \"isActive\"= %s WHERE id = %s", (bool(0), id))
+    print("resposta apagada")
+    conn.commit()
+
+    cur.close()
+
+    return redirect(url_for('dashboard'))
+
+
 if __name__ =='__main__':
     app.secret_key='secret123'
     app.run(debug=True)
