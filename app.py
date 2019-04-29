@@ -50,22 +50,20 @@ def question(id):
 
     form = ResponseForm(request.form)
     if request.method == 'POST' and form.validate():
-        description = form.description.data
+        comment = form.description.data
 
-        # # create cursor
-        # cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+        # create cursor
+        cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
-        # cur.execute("INSERT INTO public.user (name, description, login, password, \"isActive\") VALUES (%s, %s, %s, %s, %s)", (name, description, username, password, bool(1)))
+        cur.execute("INSERT INTO public.answer (comment, user_id, question_id, \"isActive\") VALUES (%s, %s, %s, %s)", (comment, session['user_id'], id, bool(1)))
 
-        # # Commit to DB
-        # conn.commit()
+        # Commit to DB
+        conn.commit()
 
-        # # close connection
-        # cur.close()
+        # close connection
+        cur.close()
 
-        flash('Infelizmente essa funcionalidade ainda não está disponível', 'danger')
-
-        return redirect(url_for('questions'))
+        return redirect(url_for('question', id = id))
 
     cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
     
@@ -79,7 +77,22 @@ def question(id):
 
     quest["createdAt"] = quest["createdAt"].strftime("%x")
 
-    return render_template('question.html', question=quest, form=form)
+    cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
+    cur.execute("SELECT * FROM public.answer a JOIN public.user u ON a.user_id = u.id WHERE a.question_id = %s and a.\"isActive\" = %s",(int(id), bool(1)))
+
+    answers = cur.fetchall()
+
+    for item in answers:
+        item["createdAt"] = item["createdAt"].strftime("%x")
+
+    # Commit to DB
+    conn.commit()
+
+    # close connection
+    cur.close()
+
+    return render_template('question.html', question=quest, form=form, answers=answers)
 
 # Class Register Form
 class RegisterForm(Form):
