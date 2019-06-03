@@ -2,28 +2,40 @@
 
 {% block body %}
 
-  <div class="mt-3 mx-auto rounded-sm card shadow w-75"> 
-    <div class="card-body"> 
+  <div class="mt-3 mx-auto rounded-sm card shadow w-75">
+      <div class="card-body">
       <h2 class="card-title text-center" >{{ question.title }}</h2>
-      <h6 class="card-subtitle mb-2 text-muted text-right text-monospace">{{ question.name }}</h6> 
+      <h6 class="card-subtitle mb-2 text-muted text-right text-monospace">{{ question.name }}</h6>
       <hr class="my-2">
       <br>
-      <p class="card-text text-justify"> {{ question.description }} </p> 
+      <p class="card-text text-justify"> {{ question.description }} </p>
+      <form action="{{url_for('voteQuestion', questionid = id, type = 'up')}}" method = "post">
+        {{ question.likes }} <b>Votos</b> <button name="like" type="submit"><img style="padding: 0px; border: none; cursor: pointer;" class="up-thumb" src="https://demo.templatic.com/answers/wp-content/themes/Answers/images/2_14_up.png" alt="Thumb up"></button>
+      </form>
+      <form action="{{url_for('voteQuestion', questionid = id, type = 'down')}}" method = "post">
+        {{ question.dislikes }} <b>Votos</b> <button name="dislike" type="submit"><img style="padding: 0px; border: none; cursor: pointer;" class="up-thumb" src="https://demo.templatic.com/answers/wp-content/themes/Answers/images/2_14_down.png" alt="Thumb down"></button>
+      </form>
       <br>
       <h6 class="card-footer text-muted text-right">Criado em: {{ question.createdAt }} </h6>
       </div>
   </div>
   {% for answer in answers %}
-    <div class="mt-3 mx-auto rounded-sm card shadow w-50"> 
-      <div class="card-body"> 
+    <div class="mt-3 mx-auto rounded-sm card shadow w-50">
+      <div class="card-body">
         <hr class="my-2">
         <br>
-        <p class="card-text text-justify"> {{ answer.comment }} </p> 
+        <p class="card-text text-justify"> {{ answer.comment }} </p>
+        <form action="{{url_for('vote', questionid = answer.question_id, answerid = answer.id, type = 'up')}}" method = "post">
+          {{ answer.likes }} <b>Votos</b> <button name="like" type="submit"><img style="padding: 0px; border: none; cursor: pointer;" class="up-thumb" src="https://demo.templatic.com/answers/wp-content/themes/Answers/images/2_14_up.png" alt="Thumb up"></button>
+        </form>
+        <form action="{{url_for('vote', questionid = answer.question_id, answerid = answer.id, type = 'down')}}" method = "post">
+          {{ answer.dislikes }} <b>Votos</b> <button name="dislike" type="submit"><img style="padding: 0px; border: none; cursor: pointer;" class="up-thumb" src="https://demo.templatic.com/answers/wp-content/themes/Answers/images/2_14_down.png" alt="Thumb down"></button>
+        </form>
         <br>
-        
+
       </div>
       <div class="card-footer">
-        <h6 class="text-muted text-right">Respondido em: {{ answer.createdAt }} por {{ answer.name }}  </h6>    
+        <h6 class="text-muted text-right">Respondido em: {{ answer.createdAt }} por {{ answer.name }}  </h6>
            {% if session.logged_in != NULL and session.user_id == answer.user_id %}
             <form class="form-inline">
               <a href="/edit_answer/{{answer.id}}" class="m-1 btn btn-outline-info">Edit</a>
@@ -45,4 +57,7 @@
       </div>
       <p><input class="btn btn-primary" type="submit" value="Submit"></p>
     </form>
+
 {% endblock %}
+
+<!--<span id="voting" class=bnone>{{ answer.likes }} <b>Votos</b></span> <img style="padding: 0px; border: none; cursor: pointer;" class="up-thumb" src="https://demo.templatic.com/answers/wp-content/themes/Answers/images/2_14_up.png" alt="Thumb up" onclick="location.href='/vote/{{answer.id}}/up/'"/> <span id="upvotes" style=";" class=up_points>{{ answer.dislikes }} <b>Votos</b></span>&nbsp;<img style="padding: 0px; border: none; cursor: pointer;"  class="down-thumb" src="https://demo.templatic.com/answers/wp-content/themes/Answers/images/2_14_down.png" alt="Thumb down" onclick="location.href='/vote/{{answer.id}}/down/'"/> <span id="downvotes" style=";" class=down_points></span-->

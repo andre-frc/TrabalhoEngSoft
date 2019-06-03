@@ -1,4 +1,4 @@
-from flask import Flask, render_template, flash, redirect, url_for, session, logging, request
+from flask import Flask, render_template, flash, redirect, url_for, session, logging, request, redirect
 from wtforms import Form, StringField, TextAreaField, PasswordField, validators
 from passlib.hash import sha256_crypt
 import psycopg2
@@ -26,9 +26,9 @@ def about():
 #Questions Page
 @app.route('/questions')
 def questions():
-    
+
     cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-    
+
     cur.execute("SELECT id, title FROM public.question WHERE \"isActive\"=%s LIMIT 20", (bool(1),))
 
     questions = cur.fetchall()
@@ -55,7 +55,7 @@ def question(id):
         # create cursor
         cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
-        cur.execute("INSERT INTO public.answer (comment, user_id, question_id, \"isActive\") VALUES (%s, %s, %s, %s)", (comment, session['user_id'], id, bool(1)))
+        cur.execute("INSERT INTO public.answer (comment, user_id, question_id, likes, dislikes, \"isActive\") VALUES (%s, %s, %s, %s, %s, %s)", (comment, session['user_id'], id, 0, 0, bool(1)))
 
         # Commit to DB
         conn.commit()
@@ -66,9 +66,9 @@ def question(id):
         return redirect(url_for('question', id = id))
 
     cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-    
+
     cur.execute("SELECT q.id, q.title, q.description, q.\"createdAt\", u.name FROM public.question q JOIN public.user u ON q.user_id = u.id WHERE q.id = %s", (id))
-    
+
     quest = cur.fetchone()
 
     conn.commit()
@@ -79,9 +79,10 @@ def question(id):
 
     cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
 
-    cur.execute("SELECT * FROM public.answer a JOIN public.user u ON a.user_id = u.id WHERE a.question_id = %s and a.\"isActive\" = %s",(int(id), bool(1)))
+    cur.execute("SELECT a.id, a.comment, a.likes, a.dislikes, a.\"createdAt\", a.question_id, u.name FROM public.answer a JOIN public.user u ON a.user_id = u.id WHERE a.question_id = %s and a.\"isActive\" = %s ORDER BY a.id ASC",(int(id), bool(1)))
 
     answers = cur.fetchall()
+#    flash(answers)
 
     for item in answers:
         item["createdAt"] = item["createdAt"].strftime("%x")
@@ -93,6 +94,7 @@ def question(id):
     cur.close()
 
     return render_template('question.html', question=quest, form=form, answers=answers)
+
 
 # Class Register Form
 class RegisterForm(Form):
@@ -195,12 +197,12 @@ def logout():
 def dashboard():
 
     cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-    
+
     cur.execute("SELECT id, title, description, \"createdAt\" FROM public.question  WHERE user_id = %s and \"isActive\"=%s ORDER BY id ASC", (session['user_id'],bool(1)))
-    
+
     user_questions = cur.fetchall()
 
-    
+
     if len(user_questions) > 0:
         for item in user_questions:
             item['createdAt']= item["createdAt"].strftime("%x")
@@ -248,9 +250,9 @@ def addQuestion():
 def editQuestion(id):
 
     cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-    
+
     cur.execute("SELECT q.id, q.title, q.description, q.\"createdAt\", u.name FROM public.question q JOIN public.user u ON q.user_id = u.id WHERE q.id = %s and q.\"isActive\"=%s", (id, bool(1)))
-    
+
     question = cur.fetchone()
 
     conn.commit()
@@ -291,16 +293,16 @@ def editQuestion(id):
 @app.route('/delete_question/<string:id>', methods=['DELETE', 'POST'])
 @is_logged_in
 def deleteQuestion(id):
-    
+
     # Create cursor
     cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-    
+
     cur.execute("UPDATE public.question SET \"isActive\"=%s WHERE id=%s", (bool(0), id))
 
     conn.commit()
 
     cur.close()
-    
+
     flash('Question deleted!', 'success')
 
     return redirect(url_for('dashboard'))
@@ -310,10 +312,10 @@ def deleteQuestion(id):
 @app.route('/delete_answer/<string:id>/', methods=['DELETE','POST'])
 @is_logged_in
 def deleteAnswer(id):
-    
+
     # Create cursor
     cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-    
+
     cur.execute("UPDATE public.answer SET \"isActive\"= %s WHERE id = %s", (bool(0), id))
     print("resposta apagada")
     conn.commit()
@@ -322,6 +324,75 @@ def deleteAnswer(id):
 
     return redirect(url_for('dashboard'))
 
+
+#Voting Answer
+@app.route('/question/<string:questionid>/vote/<string:answerid>/<string:type>/', methods=['POST'])
+@is_logged_in
+def vote(questionid, answerid, type):
+
+    cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
+    cur.execute("SELECT likes FROM public.answer WHERE question_id = %s and id = %s",(questionid, answerid))
+    votelikes = cur.fetchone()
+    conn.commit()
+
+    cur.execute("SELECT dislikes FROM public.answer WHERE question_id = %s and id = %s",(questionid, answerid))
+    votedislikes = cur.fetchone()
+    conn.commit()
+
+#    flash(votelikes)
+#    flash(votedislikes)
+#    flash(questionid)
+#    flash(answerid)
+
+    if type == 'up':
+        for item in votelikes:
+            likes = int(item) + 1
+#            flash(likes)
+            cur.execute("UPDATE public.answer SET likes=%s WHERE id=%s and question_id=%s", (likes, answerid, questionid))
+    elif type == 'down':
+        for item in votedislikes:
+            dislikes = int(item) + 1
+#            flash(dislikes)
+            cur.execute("UPDATE public.answer SET dislikes=%s WHERE id=%s and question_id=%s", (dislikes, answerid, questionid))
+
+    cur.close()
+    return redirect(url_for('question', id = questionid))
+
+
+#Voting Question
+@app.route('/question/<string:questionid>/vote/<string:type>/', methods=['POST'])
+@is_logged_in
+def voteQuestion(questionid, type):
+
+    cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+
+    cur.execute("SELECT likes FROM public.question WHERE id = %s",(questionid))
+    votelikes = cur.fetchone()
+    conn.commit()
+
+    cur.execute("SELECT dislikes FROM public.question WHERE id = %s",(questionid))
+    votedislikes = cur.fetchone()
+    conn.commit()
+
+#    flash(votelikes)
+#    flash(votedislikes)
+#    flash(questionid)
+#    flash(answerid)
+
+    if type == 'up':
+        for item in votelikes:
+            likes = int(item) + 1
+#            flash(likes)
+            cur.execute("UPDATE public.question SET likes=%s WHERE id=%s", (likes, questionid))
+    elif type == 'down':
+        for item in votedislikes:
+            dislikes = int(item) + 1
+#            flash(dislikes)
+            cur.execute("UPDATE public.answer SET dislikes=%s WHERE id=%s", (dislikes, questionid))
+
+    cur.close()
+    return redirect(url_for('question', id = questionid))
 
 if __name__ =='__main__':
     app.secret_key='secret123'
