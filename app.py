@@ -371,6 +371,7 @@ def voteQuestion(questionid, type):
     votelikes = cur.fetchone()
     conn.commit()
 
+
     cur.execute("SELECT dislikes FROM public.question WHERE id = %s",(questionid))
     votedislikes = cur.fetchone()
     conn.commit()
@@ -389,7 +390,7 @@ def voteQuestion(questionid, type):
         for item in votedislikes:
             dislikes = int(item) + 1
 #            flash(dislikes)
-            cur.execute("UPDATE public.answer SET dislikes=%s WHERE id=%s", (dislikes, questionid))
+            cur.execute("UPDATE public.question SET dislikes=%s WHERE id=%s", (dislikes, questionid))
 
     cur.close()
     return redirect(url_for('question', id = questionid))
