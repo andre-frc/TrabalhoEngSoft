@@ -10,10 +10,10 @@
       <br>
       <p class="card-text text-justify"> {{ question.description }} </p>
       <form action="{{url_for('voteQuestion', questionid = question.id, type = 'up')}}" method = "post">
-        <!--{{ question.likes }}--> 0 <b>Votos</b> <button name="like" type="submit"><img style="padding: 0px; border: none; cursor: pointer;" class="up-thumb" src="https://demo.templatic.com/answers/wp-content/themes/Answers/images/2_14_up.png" alt="Thumb up"></button>
+        <!-- {{ question.likes }} --> 0 <b>Votos</b> <button name="like" type="submit"><img style="padding: 0px; border: none; cursor: pointer;" class="up-thumb" src="https://demo.templatic.com/answers/wp-content/themes/Answers/images/2_14_up.png" alt="Thumb up"></button>
       </form>
       <form action="{{url_for('voteQuestion', questionid = question.id, type = 'down')}}" method = "post">
-        <!--{{ question.likes }}--> 0 <b>Votos</b> <button name="dislike" type="submit"><img style="padding: 0px; border: none; cursor: pointer;" class="up-thumb" src="https://demo.templatic.com/answers/wp-content/themes/Answers/images/2_14_down.png" alt="Thumb down"></button>
+        <!-- {{ question.likes }} --> 0 <b>Votos</b> <button name="dislike" type="submit"><img style="padding: 0px; border: none; cursor: pointer;" class="up-thumb" src="https://demo.templatic.com/answers/wp-content/themes/Answers/images/2_14_down.png" alt="Thumb down"></button>
       </form>
       <br>
       <h6 class="card-footer text-muted text-right">Criado em: {{ question.createdAt }} </h6>
